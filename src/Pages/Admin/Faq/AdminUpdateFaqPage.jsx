@@ -1,0 +1,124 @@
+  import React, { useState,useEffect } from 'react'
+  import AdminSidebar from '../../../Component/Admin/AdminSidebar'
+    import { Link,useNavigate, useParams } from 'react-router-dom'
+  import TextValidators from '../../../validators/TextValidators'
+  import { useDispatch, useSelector } from 'react-redux'
+  import{getFaq,updateFaq} from "../../../Redux/Actioncreator/FaqActionCreator "
+
+
+
+  export default function AdminUpdateFaqPage() {
+    let { id } = useParams()
+
+let [data,setdata] = useState({   
+  questions : '',
+  Answer :'',
+  status : true
+})
+
+let [errormessage,seterror] = useState({
+  questions : "",
+  Answer : "",
+  })
+  let[show,setshow] = useState(false)
+  let  FaqStateData = useSelector(state => state.FaqStateData)
+  let dispatch = useDispatch()
+  let navigate = useNavigate()
+
+ 
+ function getinputdata(e){
+ let {name,value} = e.target
+ setdata({...data,[name]:name ==="status"?value==="1"?true:false:value})
+ seterror({...errormessage, [name]: TextValidators(e)})
+ }
+
+  function postdata(e){
+    e.preventDefault()
+    let error = Object.values(errormessage).find(x=>x!="")
+    if(error)
+      setshow(true)
+    else{
+      let item = FaqStateData.find(x=>x.id !== id && x.questions.toLowerCase()===data.questions.toLowerCase())
+      if(item){
+        seterror({...errormessage,name:"faq with This name Already Exist"})
+        setshow(true)
+        return
+      }
+  dispatch(updateFaq({...data}))
+  navigate("/admin/faq")
+
+  }
+    }
+    
+
+  useEffect(()=>{
+    (()=>{
+      dispatch((getFaq()))
+      if(FaqStateData.length){
+  let item  = FaqStateData.find(x=>x.id===id)
+  if(item)
+  setdata({...data,...item})
+  else
+    navigate("/admin/faq")
+      }
+
+    })()
+    },[FaqStateData.length])
+
+    return (
+            <>
+                          <div className="container-fluid my-3">
+                <div className="row">
+                    <div className="col-lg-3">
+                        <AdminSidebar />
+                    </div>
+                    <div className="col-lg-9">
+                        <h5 className='bg-primary p-2 text-light text-center'>Update Feature
+                            <Link to="/admin/faq">
+                                <i className='bi bi-arrow-left text-light float-end'></i>
+                            </Link>
+                        </h5>
+                        <form onSubmit={postdata}>
+                         <div className="row">
+                      <div className="col-12 mb-3">
+                        <label>Question*</label>
+                        <input type="text" name='questions'
+                        value={data.questions} 
+                        onChange={getinputdata} placeholder='Faq-question' className={`form-control ${show && errormessage.questions ? 'border-danger' : 'border-primary'}`} />
+                        {show && errormessage.questions?<p className='text-danger'>{errormessage.questions}</p>:null}
+                      </div>
+
+                         <div className="col-12 mb-3">
+                        <label>Answer*</label>
+                        <textarea
+                         name='Answer'
+                           value={data.Answer} onChange={getinputdata} 
+                        rows={3}
+                        placeholder='Feature Short Description' className={`form-control ${show && errormessage.Answer ? 'border-danger' : 'border-primary'}`} >
+                        </textarea>
+                        {show && errormessage.Answer?<p className='text-danger'>{errormessage.Answer}</p>:null}
+                      </div>
+                                <div className="col-lg-6 mb-3">
+                                    <label>Status*</label>
+                                    <select name="status"
+                                        value={data.status ? "1" : "0"}
+                                        onChange={getinputdata}
+                                        className='form-select border-primary'>
+                                        <option value="1">Active</option>
+                                        <option value="0">Inactive</option>
+                                    </select>
+                                </div>
+
+
+                            <div className="col-12 mb-3">
+                              <button type='submit' className='btn btn-primary w-100'>Update Faq</button>
+                            </div>
+
+                          </div>
+                    </form>
+                    </div>
+                </div>
+              </div>
+            </> 
+    )
+  }
